@@ -99,17 +99,21 @@ int lastYawServoVal = 90; //initialize variables to store the last value of each
 int lastPitchServoVal = 90; 
 int lastRollServoVal = 90;
 
-int pitchMoveSpeed = 8; //this variable is the angle added to the pitch servo to control how quickly the PITCH servo moves - try values between 3 and 10
-int yawMoveSpeed = 80; //this variable is the speed controller for the continuous movement of the YAW servo motor. It is added or subtracted from the yawStopSpeed, so 0 would mean full speed rotation in one direction, and 180 means full rotation in the other. Try values between 10 and 90;
+int pitchMoveSpeed = 6; //this variable is the angle added to the pitch servo to control how quickly the PITCH servo moves - try values between 3 and 10
+int yawMoveSpeed = 40; //this variable is the speed controller for the continuous movement of the YAW servo motor. It is added or subtracted from the yawStopSpeed, so 0 would mean full speed rotation in one direction, and 180 means full rotation in the other. Try values between 10 and 90;
 int yawStopSpeed = 90; //value to stop the yaw motor - keep this at 90
-int rollMoveSpeed = 100; //this variable is the speed controller for the continuous movement of the ROLL servo motor. It is added or subtracted from the rollStopSpeed, so 0 would mean full speed rotation in one direction, and 180 means full rotation in the other. Keep this at 90 for best performance / highest torque from the roll motor when firing.
+int rollMoveSpeed = 55; //this variable is the speed controller for the continuous movement of the ROLL servo motor. It is added or subtracted from the rollStopSpeed, so 0 would mean full speed rotation in one direction, and 180 means full rotation in the other. Keep this at 90 for best performance / highest torque from the roll motor when firing.
 int rollStopSpeed = 90; //value to stop the roll motor - keep this at 90
 
-int yawPrecision = 150; // this variable represents the time in milliseconds that the YAW motor will remain at it's set movement speed. Try values between 50 and 500 to start (500 milliseconds = 1/2 second)
+int yawPrecision = 100; // this variable represents the time in milliseconds that the YAW motor will remain at it's set movement speed. Try values between 50 and 500 to start (500 milliseconds = 1/2 second)
 int rollPrecision = 158; // this variable represents the time in milliseconds that the ROLL motor with remain at it's set movement speed. If this ROLL motor is spinning more or less than 1/6th of a rotation when firing a single dart (one call of the fire(); command) you can try adjusting this value down or up slightly, but it should remain around the stock value (160ish) for best results.
 
 int pitchMax = 150; // this sets the maximum angle of the pitch servo to prevent it from crashing, it should remain below 180, and be greater than the pitchMin
 int pitchMin = 33; // this sets the minimum angle of the pitch servo to prevent it from crashing, it should remain above 0, and be less than the pitchMax
+
+const int SECRET_SEQ[] = {up, right, down, left}; // secret speed-boost sequence
+const int SECRET_SEQ_LEN = 4;
+int secretSeqIndex = 0; // tracks progress through the secret sequence
 
 void shakeHeadYes(int moves = 3); //function prototypes for shakeHeadYes and No for proper compiling
 void shakeHeadNo(int moves = 3);
@@ -208,6 +212,8 @@ void handleCommand(int command) {
             } else {
                 //shakeHeadNo();
             }
+            if (command == SECRET_SEQ[secretSeqIndex]) { secretSeqIndex++; } else { secretSeqIndex = (command == SECRET_SEQ[0]) ? 1 : 0; }
+            if (secretSeqIndex == SECRET_SEQ_LEN) { pitchMoveSpeed += 10; yawMoveSpeed += 10; rollMoveSpeed += 10; secretSeqIndex = 0; Serial.println("SPEED BOOST!"); shakeHeadYes(); }
             break;
 
         case down:
@@ -217,6 +223,8 @@ void handleCommand(int command) {
             } else {
                 //shakeHeadNo();
             }
+            if (command == SECRET_SEQ[secretSeqIndex]) { secretSeqIndex++; } else { secretSeqIndex = (command == SECRET_SEQ[0]) ? 1 : 0; }
+            if (secretSeqIndex == SECRET_SEQ_LEN) { pitchMoveSpeed += 10; yawMoveSpeed += 10; rollMoveSpeed += 10; secretSeqIndex = 0; Serial.println("SPEED BOOST!"); shakeHeadYes(); }
             break;
 
         case left:
@@ -226,6 +234,8 @@ void handleCommand(int command) {
             } else {
                 //shakeHeadNo();
             }
+            if (command == SECRET_SEQ[secretSeqIndex]) { secretSeqIndex++; } else { secretSeqIndex = (command == SECRET_SEQ[0]) ? 1 : 0; }
+            if (secretSeqIndex == SECRET_SEQ_LEN) { pitchMoveSpeed += 10; yawMoveSpeed += 10; rollMoveSpeed += 10; secretSeqIndex = 0; Serial.println("SPEED BOOST!"); shakeHeadYes(); }
             break;
 
         case right:
@@ -235,6 +245,8 @@ void handleCommand(int command) {
             } else {
                 //shakeHeadNo();
             }
+            if (command == SECRET_SEQ[secretSeqIndex]) { secretSeqIndex++; } else { secretSeqIndex = (command == SECRET_SEQ[0]) ? 1 : 0; }
+            if (secretSeqIndex == SECRET_SEQ_LEN) { pitchMoveSpeed += 10; yawMoveSpeed += 10; rollMoveSpeed += 10; secretSeqIndex = 0; Serial.println("SPEED BOOST!"); shakeHeadYes(); }
             break;
 
         case ok:
@@ -254,6 +266,17 @@ void handleCommand(int command) {
                 passcodeEntered = false;
             } else {
                 //shakeHeadNo();
+            }
+            break;
+
+        case hashtag:
+            if (passcodeEntered) {
+                Serial.println("SPIN");
+                yawServo.write(0);   // full-speed yaw rotation
+                rollServo.write(180); // full-speed roll rotation
+                delay(5000);
+                yawServo.write(yawStopSpeed);
+                rollServo.write(rollStopSpeed);
             }
             break;
 
